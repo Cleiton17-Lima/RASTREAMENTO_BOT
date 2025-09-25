@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: rastreamento_boot
+    env: python
+    region: brasil   # ou sua região preferida
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
