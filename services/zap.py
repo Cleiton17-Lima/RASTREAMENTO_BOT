@@ -26,5 +26,7 @@ def enviar_mensagem(numero: str = DEFAULT_PHONE, texto: str = "🚚 Teste de ras
     except Exception as e:
         print("❌ Erro ao enviar mensagem Z-API:", e)
 
-# Teste
-enviar_mensagem()
+if __name__ == "__main__":
+    enviar_mensagem(texto="🚀 Teste rodando agora")
+
+
