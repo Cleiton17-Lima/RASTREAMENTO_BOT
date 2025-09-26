@@ -18,9 +18,15 @@ TOKEN = os.getenv("ZAPI_TOKEN")
 
 app = FastAPI()
 
-@app.get("/")
-def root():
-    return {"status": "ok"}
+
+@app.get("/env")
+def verificar_env():
+    return {
+        "ZAPI_INSTANCE": os.getenv("ZAPI_INSTANCE"),
+        "ZAPI_TOKEN": os.getenv("ZAPI_TOKEN"),
+        "SSW_API": os.getenv("SSW_API")
+    }
+
 
 @app.post("/webhook")
 async def webhook(request: Request):
@@ -57,6 +63,7 @@ if __name__ == "__main__":
     import os
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
 
 
