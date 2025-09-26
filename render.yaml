@@ -2,9 +2,10 @@ services:
   - type: web
     name: rastreamento_boot
     env: python
-    region: brasil   # ou sua região preferida
+    region: oregnon   # ou sua região preferida
     branch: main
     buildCommand: pip install -r requirements.txt
-    startCommand:  gunicorn app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$POR
+
 
 
