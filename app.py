@@ -19,13 +19,9 @@ TOKEN = os.getenv("ZAPI_TOKEN")
 app = FastAPI()
 
 
-@app.get("/env")
-def verificar_env():
-    return {
-        "ZAPI_INSTANCE": os.getenv("ZAPI_INSTANCE"),
-        "ZAPI_TOKEN": os.getenv("ZAPI_TOKEN"),
-        "SSW_API": os.getenv("SSW_API")
-    }
+@app.get("/")
+def root():
+    return {"status": "ok"}
 
 
 @app.post("/webhook")
