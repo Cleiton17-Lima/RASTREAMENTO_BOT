@@ -1,13 +1,10 @@
 from fastapi import FastAPI, Request
 import os
-
-print("Iniciando aplicação FastAPI...")
-print("Importando serviços...")
-
 from services.ssw import consultar_ssw
 from services.zap import enviar_mensagem
+from dotenv import load_env
 
-print("Serviços importados com sucesso.")
+
 
 
 
@@ -58,6 +55,7 @@ if __name__ == "__main__":
     import os
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
 
 
