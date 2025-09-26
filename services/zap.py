@@ -1,5 +1,5 @@
 import requests
-import os 
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,7 +18,13 @@ def enviar_mensagem(numero: str = DEFAULT_PHONE, texto: str = "🚚 Teste de ras
 
     try:
         response = requests.post(url, json=payload)
-        print("Status:", response.status_code)
-        print("Resposta:", response.text)
+        print("➡️ Enviando para:", numero)
+        print("➡️ URL:", url)
+        print("➡️ Payload:", payload)
+        print("📡 Status:", response.status_code)
+        print("📨 Resposta:", response.text)
     except Exception as e:
-        print("Erro ao enviar mensagem Z-API:", e)
+        print("❌ Erro ao enviar mensagem Z-API:", e)
+
+# Teste
+enviar_mensagem()
