@@ -6,10 +6,15 @@ load_dotenv()
 
 INSTANCE = os.getenv("ZAPI_INSTANCE")
 TOKEN = os.getenv("ZAPI_TOKEN")
-DEFAULT_PHONE = os.getenv("ZAPI_PHONE")
+CLIENT_TOKEN = os.getenv("ZAPI_CLIENT_TOKEN")
 
-def enviar_mensagem(numero: str = DEFAULT_PHONE, texto: str = "🚚 Teste de rastreio"):
+def enviar_mensagem(numero: str, texto: str):
     url = f"https://api.z-api.io/instances/{INSTANCE}/token/{TOKEN}/send-text"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Client-Token": CLIENT_TOKEN
+    }
 
     payload = {
         "phone": numero,
@@ -17,16 +22,8 @@ def enviar_mensagem(numero: str = DEFAULT_PHONE, texto: str = "🚚 Teste de ras
     }
 
     try:
-        response = requests.post(url, json=payload)
-        print("➡️ Enviando para:", numero)
-        print("➡️ URL:", url)
-        print("➡️ Payload:", payload)
+        response = requests.post(url, json=payload, headers=headers)
         print("📡 Status:", response.status_code)
         print("📨 Resposta:", response.text)
     except Exception as e:
-        print("❌ Erro ao enviar mensagem Z-API:", e)
-
-if __name__ == "__main__":
-    enviar_mensagem(texto="🚀 Teste rodando agora")
-
-
+        print("❌ Erro ao enviar mensagem:", e)
