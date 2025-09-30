@@ -34,15 +34,18 @@ async def webhook(request: Request):
         if mensagem:
             mensagem = mensagem.strip()
 
-            # Valida se é chave DANFE
+             # Valida se é chave DANFE
             if mensagem.isdigit() and len(mensagem) == 44:
                 rastreio = consultar_ssw(mensagem)
-                if rastreio:
+                print("📦 Resposta da SSW:", rastreio)  # DEBUG
+
+                if rastreio and rastreio.get("ult_evento"):
+                    evento = rastreio["ult_evento"]
                     resposta = f"""
 📦 *Rastreamento da sua carga*  
-- Status: {rastreio.get('status', 'Indisponível')}  
-- Última atualização: {rastreio.get('data', '---')}  
-- Local: {rastreio.get('local', '---')}  
+- Status: {evento.get('status', 'Indisponível')}  
+- Última atualização: {evento.get('data', '---')}  
+- Local: {evento.get('local', '---')}  
 """
                 else:
                     resposta = "❌ Não encontrei informações para essa DANFE."
@@ -65,7 +68,6 @@ async def webhook(request: Request):
         print("ℹ️ Evento não tratado:", data)
 
     return {"status": "ok"}
-
 
 
 if __name__ == "__main__":
