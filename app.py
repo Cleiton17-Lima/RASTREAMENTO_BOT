@@ -20,26 +20,20 @@ def root():
 @app.post("/webhook")
 async def webhook(request: Request):
     data = await request.json()
-    print("Evento recebido:", data)  # log para debug
+    print("Evento recebido:", data)
 
-    # Detecta tipo de evento
-    event = data.get("event")
+    # Pega o tipo de evento
+    event_type = data.get("type")
 
-    # Caso seja mensagem recebida
-    if event == "message" or "message" in data:
-        mensagem = (
-            data.get("message", {}).get("text", "")
-            or data.get("data", {}).get("message", {}).get("text", "")
-        )
-        telefone = (
-            data.get("message", {}).get("from", "")
-            or data.get("data", {}).get("from", "")
-        )
+    # Se for mensagem recebida
+    if event_type == "ReceivedCallback":
+        telefone = data.get("phone")
+        mensagem = data.get("text", {}).get("message", "")
 
         if mensagem:
             mensagem = mensagem.strip()
 
-            # Valida se é chave DANFE (44 dígitos)
+            # Valida se é chave DANFE
             if mensagem.isdigit() and len(mensagem) == 44:
                 rastreio = consultar_ssw(mensagem)
                 if rastreio:
@@ -57,15 +51,13 @@ async def webhook(request: Request):
             # Envia resposta
             enviar_mensagem(telefone, resposta)
 
-    # Caso seja evento de conexão
-    elif event == "connected":
+    elif event_type == "Connected":
         print("📡 Instância conectada:", data)
 
-    elif event == "disconnected":
+    elif event_type == "Disconnected":
         print("⚠️ Instância desconectada:", data)
 
-    # Caso seja status de mensagem
-    elif event == "message-status":
+    elif event_type == "MessageStatus":
         print("📩 Status da mensagem:", data)
 
     else:
@@ -74,6 +66,8 @@ async def webhook(request: Request):
     return {"status": "ok"}
 
 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
