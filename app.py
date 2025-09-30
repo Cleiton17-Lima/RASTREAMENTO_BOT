@@ -35,22 +35,34 @@ async def webhook(request: Request):
             mensagem = mensagem.strip()
 
              # Valida se é chave DANFE
-            if mensagem.isdigit() and len(mensagem) == 44:
-                rastreio = consultar_ssw(mensagem)
-                print("📦 Resposta da SSW:", rastreio)  # DEBUG
+           if mensagem.isdigit() and len(mensagem) == 44:
+    rastreio = consultar_ssw(mensagem)
+    if rastreio and rastreio.get("success"):
+        doc = rastreio.get("documento", {})
+        header = doc.get("header", {})
+        tracking = doc.get("tracking", [])
 
-                if rastreio and rastreio.get("ult_evento"):
-                    evento = rastreio["ult_evento"]
-                    resposta = f"""
+        remetente = header.get("remetente", "---")
+        destinatario = header.get("destinatario", "---")
+        nf = header.get("nro_nf", "---")
+
+        if tracking:
+            ultimo_evento = tracking[-1]  # pega o último status
+            resposta = f"""
 📦 *Rastreamento da sua carga*  
-- Status: {evento.get('status', 'Indisponível')}  
-- Última atualização: {evento.get('data', '---')}  
-- Local: {evento.get('local', '---')}  
+- NF: {nf}  
+- Remetente: {remetente}  
+- Destinatário: {destinatario}  
+- Último status: {ultimo_evento.get('ocorrencia')}  
+- Descrição: {ultimo_evento.get('descricao')}  
+- Data/Hora: {ultimo_evento.get('data_hora')}  
+- Local: {ultimo_evento.get('cidade')}  
 """
-                else:
-                    resposta = "❌ Não encontrei informações para essa DANFE."
-            else:
-                resposta = "Olá! 👋 Envie a *chave da DANFE (44 dígitos)* para consultar o rastreio."
+        else:
+            resposta = f"⚠️ Documento localizado, mas sem eventos de rastreamento."
+    else:
+        resposta = "❌ Não encontrei informações para essa DANFE."
+
 
             # Envia resposta
             enviar_mensagem(telefone, resposta)
@@ -73,5 +85,6 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
 
