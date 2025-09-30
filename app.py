@@ -63,6 +63,9 @@ async def webhook(request: Request):
     else:
         resposta = "❌ Não encontrei informações para essa DANFE."
 
+ else:
+     resposta = "Olá! 👋 Envie a *chave da DANFE (44 dígitos)* para consultar o rastreio."
+
 
             # Envia resposta
             enviar_mensagem(telefone, resposta)
@@ -85,6 +88,7 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
 
 
