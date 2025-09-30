@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request
 import os
 from services.ssw import consultar_ssw
 from services.zap import enviar_mensagem
-from services.zap import processar_mensagem
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,10 +22,9 @@ async def webhook(request: Request):
     data = await request.json()
     print("Evento recebido:", data)
 
-    # Pega o tipo de evento
+    # Tipo de evento
     event_type = data.get("type")
 
-    # Se for mensagem recebida
     if event_type == "ReceivedCallback":
         telefone = data.get("phone")
         mensagem = data.get("text", {}).get("message", "")
@@ -34,21 +32,23 @@ async def webhook(request: Request):
         if mensagem:
             mensagem = mensagem.strip()
 
-             # Valida se é chave DANFE
-           if mensagem.isdigit() and len(mensagem) == 44:
-    rastreio = consultar_ssw(mensagem)
-    if rastreio and rastreio.get("success"):
-        doc = rastreio.get("documento", {})
-        header = doc.get("header", {})
-        tracking = doc.get("tracking", [])
+            # Valida chave DANFE
+            if mensagem.isdigit() and len(mensagem) == 44:
+                rastreio = consultar_ssw(mensagem)
+                print("📦 Resposta da SSW:", rastreio)
 
-        remetente = header.get("remetente", "---")
-        destinatario = header.get("destinatario", "---")
-        nf = header.get("nro_nf", "---")
+                if rastreio and rastreio.get("success"):
+                    doc = rastreio.get("documento", {})
+                    header = doc.get("header", {})
+                    tracking = doc.get("tracking", [])
 
-        if tracking:
-            ultimo_evento = tracking[-1]  # pega o último status
-            resposta = f"""
+                    remetente = header.get("remetente", "---")
+                    destinatario = header.get("destinatario", "---")
+                    nf = header.get("nro_nf", "---")
+
+                    if tracking:
+                        ultimo_evento = tracking[-1]  # Último status
+                        resposta = f"""
 📦 *Rastreamento da sua carga*  
 - NF: {nf}  
 - Remetente: {remetente}  
@@ -58,14 +58,12 @@ async def webhook(request: Request):
 - Data/Hora: {ultimo_evento.get('data_hora')}  
 - Local: {ultimo_evento.get('cidade')}  
 """
-        else:
-            resposta = f"⚠️ Documento localizado, mas sem eventos de rastreamento."
-    else:
-        resposta = "❌ Não encontrei informações para essa DANFE."
-
- else:
-     resposta = "Olá! 👋 Envie a *chave da DANFE (44 dígitos)* para consultar o rastreio."
-
+                    else:
+                        resposta = f"⚠️ Documento localizado, mas sem eventos de rastreamento."
+                else:
+                    resposta = "❌ Não encontrei informações para essa DANFE."
+            else:
+                resposta = "Olá! 👋 Envie a *chave da DANFE (44 dígitos)* para consultar o rastreio."
 
             # Envia resposta
             enviar_mensagem(telefone, resposta)
@@ -88,7 +86,3 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
-
-
-
