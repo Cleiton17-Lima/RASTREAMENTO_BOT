@@ -13,9 +13,6 @@ TOKEN = os.getenv("ZAPI_TOKEN")
 
 app = FastAPI()
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
 @app.get("/")
 def root():
     return {"status": "ok"}
@@ -23,7 +20,7 @@ def root():
 @app.post("/webhook")
 async def webhook(request: Request):
     data = await request.json()
-    print("📩 Evento recebido:", data)
+    print("Evento recebido:", data)
 
     event_type = data.get("type")
 
@@ -31,66 +28,57 @@ async def webhook(request: Request):
         telefone = data.get("phone")
         mensagem = data.get("text", {}).get("message", "")
 
-        if mensagem:
-            mensagem = mensagem.strip()
+        if not mensagem:
+            return {"status": "ok"}
 
-            if ";" in mensagem:
-                partes = mensagem.split(";")
-                if len(partes) == 2:
-                    cnpj = "".join(filter(str.isdigit, partes[0].strip()))
-                    nro_nf = partes[1].strip()
+        mensagem = mensagem.strip()
+        resposta = "⚠️ Envie no formato: *CNPJ;NF* (ex: 00850257000132;359983)."
 
-                    rastreio = consultar_ssw_doc_nf(cnpj, nro_nf)
+        # Verifica se usuário enviou CNPJ;NF
+        if ";" in mensagem:
+            try:
+                cnpj, nf = mensagem.split(";", 1)
+                cnpj, nf = cnpj.strip(), nf.strip()
+
+                if cnpj.isdigit() and nf.isdigit():
+                    rastreio = consultar_ssw_nf(cnpj, nf)
                     print("📦 Resposta da SSW DEST:", rastreio)
 
                     if rastreio and rastreio.get("success"):
-                        header = rastreio.get("header", {})
-                        tracking = rastreio.get("tracking", [])
-
-                        remetente = header.get("remetente", "---")
-                        destinatario = header.get("destinatario", "---")
-                        nf = header.get("nro_nf", nro_nf)
+                        doc = rastreio.get("documento", {})
+                        header = doc.get("header", {})
+                        tracking = doc.get("tracking", [])
 
                         if tracking:
                             ultimo_evento = tracking[-1]
-                            resposta = (
-                                f"📦 *Rastreamento da sua carga*\n"
-                                f"- NF: {nf}\n"
-                                f"- Remetente: {remetente}\n"
-                                f"- Destinatário: {destinatario}\n"
-                                f"- Último status: {ultimo_evento.get('ocorrencia')}\n"
-                                f"- Descrição: {ultimo_evento.get('descricao')}\n"
-                                f"- Data/Hora: {ultimo_evento.get('data_hora')}\n"
-                                f"- Local: {ultimo_evento.get('cidade')}"
-                            )
+                            resposta = f"""
+📦 *Rastreamento via NF*  
+NF: {header.get('nro_nf', '---')}  
+Remetente: {header.get('remetente', '---')}  
+Destinatário: {header.get('destinatario', '---')}  
+
+➡️ Último status: {ultimo_evento.get('ocorrencia')}  
+📍 Local: {ultimo_evento.get('cidade')}  
+🕒 Data: {ultimo_evento.get('data_hora')}  
+"""
                         else:
-                            resposta = "⚠️ Documento localizado, mas sem eventos de rastreamento."
+                            resposta = "⚠️ NF localizada, mas sem eventos de rastreamento."
                     else:
-                        resposta = "❌ Não encontrei informações para esse documento/NF."
+                        resposta = "❌ Não encontrei informações para essa NF."
                 else:
-                    resposta = "❌ Formato inválido. Use: CNPJ;NF"
-            else:
-                resposta = "Olá! 👋 Envie o *CNPJ ou CPF + número da NF* no formato:\n`CNPJ;NF`"
+                    resposta = "⚠️ O formato está incorreto. Use: *CNPJ;NF*"
 
-            enviar_mensagem(telefone, resposta)
+            except Exception:
+                resposta = "⚠️ O formato está incorreto. Use: *CNPJ;NF*"
 
-    elif event_type == "Connected":
-        print("📡 Instância conectada:", data)
-
-    elif event_type == "Disconnected":
-        print("⚠️ Instância desconectada:", data)
-
-    elif event_type == "MessageStatus":
-        print("📩 Status da mensagem:", data)
-
-    else:
-        print("ℹ️ Evento não tratado:", data)
+        enviar_mensagem(telefone, resposta)
 
     return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
 
 
