@@ -44,8 +44,8 @@ async def webhook(request: Request):
 
                     if rastreio and rastreio.get("success"):
                         cnpj_info = rastreio.get("cnpj", {})
-                        header = doc_info.get("header", {})
-                        tracking = doc_info.get("tracking", [])
+                        header = rastreio.get("header", {})
+                        tracking = rastreio.get("tracking", [])
 
                         remetente = header.get("remetente", "---")
                         destinatario = header.get("destinatario", "---")
@@ -93,6 +93,7 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
 
 
