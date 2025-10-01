@@ -6,20 +6,15 @@ load_dotenv()
 
 SSW_API_DEST = os.getenv("SSW_API_DEST")
 
-def consultar_ssw_doc_nf(cnpj: str, nro_nf: str):
+def consultar_ssw_nf(cnpj: str, nro_nf: str):
     """
-    Consulta a API Tracking Destinatário da SSW pelo número da NF,
-    podendo ser CPF ou CNPJ no campo 'cnpj'.
+    Consulta a API Tracking Destinatário da SSW pelo número da NF.
+    O usuário deve informar CNPJ e NF.
     """
     payload = {
-        "cnpj": cnpj,   # a API usa sempre o campo 'cnpj', mas aceita CPF ou CNPJ
+        "cnpj": cnpj,
         "nro_nf": nro_nf
     }
-
-    if SSW_SENHA:  # só adiciona se tiver configurada
-        payload["senha"] = SSW_SENHA
-
-    print("📤 Enviando payload para SSW DEST:", payload)
 
     try:
         response = requests.post(
@@ -36,5 +31,3 @@ def consultar_ssw_doc_nf(cnpj: str, nro_nf: str):
     except Exception as e:
         print("❌ Erro na consulta SSW DEST:", e)
         return None
-
-
