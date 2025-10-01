@@ -3,6 +3,8 @@ import os
 from services.ssw_dest import consultar_ssw_doc_nf
 from services.zap import enviar_mensagem
 from dotenv import load_dotenv
+import logging
+
 
 load_dotenv()
 
@@ -89,4 +91,5 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
