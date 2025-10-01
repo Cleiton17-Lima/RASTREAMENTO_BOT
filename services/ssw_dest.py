@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SSW_API_DEST = os.getenv("SSW_API_DEST")
-SSW_SENHA = os.getenv("SSW_SENHA", None)  # opcional, pode ser vazio
 
 def consultar_ssw_doc_nf(cnpj: str, nro_nf: str):
     """
@@ -37,4 +36,5 @@ def consultar_ssw_doc_nf(cnpj: str, nro_nf: str):
     except Exception as e:
         print("❌ Erro na consulta SSW DEST:", e)
         return None
+
 
