@@ -22,21 +22,24 @@ async def webhook(request: Request):
     data = await request.json()
     print("📩 Evento recebido:", data)
 
+    # Tipo de evento
     event_type = data.get("type")
 
     if event_type == "ReceivedCallback":
         telefone = data.get("phone")
-        mensagem = data.get("text", {}).get("message", "").strip()
+        mensagem = data.get("text", {}).get("message", "")
 
-        resposta = "⚠️ Envie no formato: *CNPJ/CPF;NF* (ex: 00850257000132;123456)."
+        if mensagem:
+            mensagem = mensagem.strip()
 
-        if ";" in mensagem:
-            try:
-                doc, nf = mensagem.split(";", 1)
-                doc, nf = doc.strip(), nf.strip()
+            # Verifica se é formato "CNPJ;NF"
+            if ";" in mensagem:
+                partes = mensagem.split(";")
+                if len(partes) == 2:
+                    doc = "".join(filter(str.isdigit, partes[0].strip()))  # só números
+                    nro_nf = partes[1].strip().zfill(9)  # NF sempre com 9 dígitos
 
-                if doc.isdigit() and nf.isdigit():
-                    rastreio = consultar_ssw_doc_nf(doc, nf)
+                    rastreio = consultar_ssw_doc_nf(doc, nro_nf)
                     print("📦 Resposta da SSW DEST:", rastreio)
 
                     if rastreio and rastreio.get("success"):
@@ -46,31 +49,31 @@ async def webhook(request: Request):
 
                         remetente = header.get("remetente", "---")
                         destinatario = header.get("destinatario", "---")
-                        nf_num = header.get("nro_nf", nf)
+                        nf = header.get("nro_nf", nro_nf)
 
                         if tracking:
                             ultimo_evento = tracking[-1]
                             resposta = f"""
 📦 *Rastreamento da sua carga*  
-- NF: {nf_num}  
+- NF: {nf}  
 - Remetente: {remetente}  
 - Destinatário: {destinatario}  
 - Último status: {ultimo_evento.get('ocorrencia')}  
+- Descrição: {ultimo_evento.get('descricao')}  
 - Data/Hora: {ultimo_evento.get('data_hora')}  
 - Local: {ultimo_evento.get('cidade')}  
 """
                         else:
-                            resposta = "⚠️ NF localizada, mas sem eventos de rastreamento."
+                            resposta = "⚠️ Documento localizado, mas sem eventos de rastreamento."
                     else:
                         resposta = "❌ Não encontrei informações para esse documento/NF."
                 else:
-                    resposta = "⚠️ Formato inválido. Use: *CNPJ/CPF;NF*"
+                    resposta = "❌ Formato inválido. Use: CNPJ;NF"
+            else:
+                resposta = "Olá! 👋 Envie o *CNPJ ou CPF + número da NF* no formato:\n`CNPJ;NF`"
 
-            except Exception as e:
-                print("❌ Erro no processamento:", e)
-                resposta = "⚠️ Erro ao processar a sua solicitação. Verifique o formato."
-
-        enviar_mensagem(telefone, resposta)
+            # Envia resposta
+            enviar_mensagem(telefone, resposta)
 
     elif event_type == "Connected":
         print("📡 Instância conectada:", data)
@@ -79,7 +82,7 @@ async def webhook(request: Request):
         print("⚠️ Instância desconectada:", data)
 
     elif event_type == "MessageStatus":
-        print("📨 Status da mensagem:", data)
+        print("📩 Status da mensagem:", data)
 
     else:
         print("ℹ️ Evento não tratado:", data)
