@@ -3,8 +3,6 @@ import os
 from services.ssw_dest import consultar_ssw_nf
 from services.zap import enviar_mensagem
 from dotenv import load_dotenv
-import logging
-
 
 load_dotenv()
 
@@ -20,7 +18,7 @@ def root():
 @app.post("/webhook")
 async def webhook(request: Request):
     data = await request.json()
-    print("Evento recebido:", data)
+    print("📩 Evento recebido:", data)
 
     event_type = data.get("type")
 
@@ -45,9 +43,13 @@ async def webhook(request: Request):
                     print("📦 Resposta da SSW DEST:", rastreio)
 
                     if rastreio and rastreio.get("success"):
-                        doc = rastreio.get("documento", {})
-                        header = doc.get("header", {})
-                        tracking = doc.get("tracking", [])
+                        documento = rastreio.get("documento", {})
+                        header = documento.get("header", {})
+                        tracking = documento.get("tracking", [])
+
+                        # garante que tracking seja lista
+                        if not isinstance(tracking, list):
+                            tracking = []
 
                         if tracking:
                             ultimo_evento = tracking[-1]
@@ -60,6 +62,7 @@ Destinatário: {header.get('destinatario', '---')}
 ➡️ Último status: {ultimo_evento.get('ocorrencia')}  
 📍 Local: {ultimo_evento.get('cidade')}  
 🕒 Data: {ultimo_evento.get('data_hora')}  
+📝 {ultimo_evento.get('descricao')}
 """
                         else:
                             resposta = "⚠️ NF localizada, mas sem eventos de rastreamento."
@@ -68,9 +71,11 @@ Destinatário: {header.get('destinatario', '---')}
                 else:
                     resposta = "⚠️ O formato está incorreto. Use: *CNPJ;NF*"
 
-            except Exception:
+            except Exception as e:
+                print("❌ Erro no processamento:", e)
                 resposta = "⚠️ O formato está incorreto. Use: *CNPJ;NF*"
 
+        # Envia a resposta para o WhatsApp
         enviar_mensagem(telefone, resposta)
 
     return {"status": "ok"}
@@ -78,9 +83,3 @@ Destinatário: {header.get('destinatario', '---')}
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
-
-
-
-
-
