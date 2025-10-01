@@ -11,6 +11,9 @@ TOKEN = os.getenv("ZAPI_TOKEN")
 
 app = FastAPI()
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 @app.get("/")
 def root():
     return {"status": "ok"}
@@ -86,3 +89,4 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
