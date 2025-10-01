@@ -11,9 +11,11 @@ TOKEN = os.getenv("ZAPI_TOKEN")
 
 app = FastAPI()
 
+
 @app.get("/")
 def root():
     return {"status": "ok"}
+
 
 @app.post("/webhook")
 async def webhook(request: Request):
@@ -43,11 +45,9 @@ async def webhook(request: Request):
                     print("📦 Resposta da SSW DEST:", rastreio)
 
                     if rastreio and rastreio.get("success"):
-                        documento = rastreio.get("documento", {})
-                        header = documento.get("header", {})
-                        tracking = documento.get("tracking", [])
+                        header = rastreio.get("header", {})
+                        tracking = rastreio.get("tracking", [])
 
-                        # garante que tracking seja lista
                         if not isinstance(tracking, list):
                             tracking = []
 
@@ -79,6 +79,7 @@ Destinatário: {header.get('destinatario', '---')}
         enviar_mensagem(telefone, resposta)
 
     return {"status": "ok"}
+
 
 if __name__ == "__main__":
     import uvicorn
