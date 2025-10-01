@@ -11,18 +11,15 @@ TOKEN = os.getenv("ZAPI_TOKEN")
 
 app = FastAPI()
 
-
 @app.get("/")
 def root():
     return {"status": "ok"}
-
 
 @app.post("/webhook")
 async def webhook(request: Request):
     data = await request.json()
     print("📩 Evento recebido:", data)
 
-    # Tipo de evento
     event_type = data.get("type")
 
     if event_type == "ReceivedCallback":
@@ -32,18 +29,16 @@ async def webhook(request: Request):
         if mensagem:
             mensagem = mensagem.strip()
 
-            # Verifica se é formato "CNPJ;NF"
             if ";" in mensagem:
                 partes = mensagem.split(";")
                 if len(partes) == 2:
-                    cnpj = "".join(filter(str.isdigit, partes[0].strip()))  # só números
+                    cnpj = "".join(filter(str.isdigit, partes[0].strip()))
                     nro_nf = partes[1].strip()
 
                     rastreio = consultar_ssw_doc_nf(cnpj, nro_nf)
                     print("📦 Resposta da SSW DEST:", rastreio)
 
                     if rastreio and rastreio.get("success"):
-                        cnpj_info = rastreio.get("cnpj", {})
                         header = rastreio.get("header", {})
                         tracking = rastreio.get("tracking", [])
 
@@ -53,16 +48,16 @@ async def webhook(request: Request):
 
                         if tracking:
                             ultimo_evento = tracking[-1]
-                            resposta = f"""
-📦 *Rastreamento da sua carga*  
-- NF: {nf}  
-- Remetente: {remetente}  
-- Destinatário: {destinatario}  
-- Último status: {ultimo_evento.get('ocorrencia')}  
-- Descrição: {ultimo_evento.get('descricao')}  
-- Data/Hora: {ultimo_evento.get('data_hora')}  
-- Local: {ultimo_evento.get('cidade')}  
-"""
+                            resposta = (
+                                f"📦 *Rastreamento da sua carga*\n"
+                                f"- NF: {nf}\n"
+                                f"- Remetente: {remetente}\n"
+                                f"- Destinatário: {destinatario}\n"
+                                f"- Último status: {ultimo_evento.get('ocorrencia')}\n"
+                                f"- Descrição: {ultimo_evento.get('descricao')}\n"
+                                f"- Data/Hora: {ultimo_evento.get('data_hora')}\n"
+                                f"- Local: {ultimo_evento.get('cidade')}"
+                            )
                         else:
                             resposta = "⚠️ Documento localizado, mas sem eventos de rastreamento."
                     else:
@@ -72,7 +67,6 @@ async def webhook(request: Request):
             else:
                 resposta = "Olá! 👋 Envie o *CNPJ ou CPF + número da NF* no formato:\n`CNPJ;NF`"
 
-            # Envia resposta
             enviar_mensagem(telefone, resposta)
 
     elif event_type == "Connected":
@@ -89,11 +83,6 @@ async def webhook(request: Request):
 
     return {"status": "ok"}
 
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
-
-
-
