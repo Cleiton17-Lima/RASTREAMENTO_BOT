@@ -36,14 +36,14 @@ async def webhook(request: Request):
             if ";" in mensagem:
                 partes = mensagem.split(";")
                 if len(partes) == 2:
-                    doc = "".join(filter(str.isdigit, partes[0].strip()))  # só números
+                    cnpj = "".join(filter(str.isdigit, partes[0].strip()))  # só números
                     nro_nf = partes[1].strip()
 
-                    rastreio = consultar_ssw_doc_nf(doc, nro_nf)
+                    rastreio = consultar_ssw_doc_nf(cnpj, nro_nf)
                     print("📦 Resposta da SSW DEST:", rastreio)
 
                     if rastreio and rastreio.get("success"):
-                        doc_info = rastreio.get("documento", {})
+                        cnpj_info = rastreio.get("cnpj", {})
                         header = doc_info.get("header", {})
                         tracking = doc_info.get("tracking", [])
 
@@ -93,5 +93,6 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
 
 
